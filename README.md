@@ -35,9 +35,7 @@ The guide is presented in a **modern, responsive design** using **HTML + Tailwin
 ## 📂 Project Structure
 ```
 
-├── index.html          # Homepage (intro + navigation)
-├── render.html         # Django deployment guide for Render
-├── vercel.html         # Django deployment guide for Vercel
+├── index.html          # Homepage (intro + navigation)  # Django deployment guide for Render and Vercel
 ├── README.md           # Documentation
 
 ```
