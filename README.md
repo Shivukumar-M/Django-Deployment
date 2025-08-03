@@ -48,13 +48,6 @@ Simply visit:
 
 ---
 
-## 📸 Preview
-*(Add a screenshot of your site here)*  
-Example placeholder:  
-![Preview](https://via.placeholder.com/900x400?text=Django+Deployment+Guide+Preview)
-
----
-
 ## ✅ How to Use the Guide
 1. Open the **Render Deployment** page → Follow the steps to host your Django project on Render.
 2. Open the **Vercel Deployment** page → Follow the steps to host your Django project on Vercel.
