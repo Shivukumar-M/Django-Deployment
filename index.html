@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Deployment Guide - Render & Vercel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669',
+                        secondary: '#7C3AED',
+                        accent: '#F59E0B',
+                        dark: '#1F2937',
+                        'render-green': '#46e3b7',
+                        'vercel-black': '#000000',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                        'mono': ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glow {
+            from { box-shadow: 0 0 20px #059669; }
+            to { box-shadow: 0 0 30px #059669, 0 0 40px #059669; }
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #059669, #7C3AED);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .code-block {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-left: 4px solid #059669;
+        }
+        .step-card {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.1), rgba(124, 58, 237, 0.1));
+        }
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(5, 150, 105, 0.2);
+        }
+        .platform-card {
+            transition: all 0.3s ease;
+        }
+        .platform-card:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 min-h-screen text-white font-sans">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center animate-glow">
+                        <i class="fab fa-python text-white text-lg"></i>
+                    </div>
+                    <span class="ml-3 text-xl font-bold gradient-text">Django Deployment</span>
+                </div>
+                
+                <div class="hidden md:flex space-x-6">
+                    <a href="#overview" class="hover:text-primary transition-colors duration-300">Overview</a>
+                    <a href="#prerequisites" class="hover:text-primary transition-colors duration-300">Prerequisites</a>
+                    <a href="#render" class="hover:text-primary transition-colors duration-300">Render</a>
+                    <a href="#vercel" class="hover:text-primary transition-colors duration-300">Vercel</a>
+                    <a href="#files" class="hover:text-primary transition-colors duration-300">Files</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-16 text-center animate-fade-in">
+        <div class="max-w-4xl mx-auto px-4">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6">
+                <span class="gradient-text">Django Deployment</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-8">
+                Complete guide to deploy your Django project to Render & Vercel
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#render" class="bg-render-green hover:bg-render-green/80 text-black font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105">
+                    <i class="fas fa-server mr-2"></i>Deploy to Render
+                </a>
+                <a href="#vercel" class="bg-vercel-black hover:bg-gray-800 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 border border-white/20">
+                    <i class="fas fa-rocket mr-2"></i>Deploy to Vercel
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section id="overview" class="py-16 animate-slide-up">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12 gradient-text">Deployment Overview</h2>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="platform-card bg-gradient-to-br from-render-green/20 to-emerald-600/20 p-8 rounded-xl border border-render-green/30">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-server text-render-green text-2xl mr-4"></i>
+                        <h3 class="text-2xl font-bold">Render</h3>
+                    </div>
+                    <p class="text-gray-300 mb-4">Perfect for full-stack Django applications with database and static files.</p>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center"><i class="fas fa-check text-render-green mr-2"></i>Free tier available</li>
+                        <li class="flex items-center"><i class="fas fa-check text-render-green mr-2"></i>PostgreSQL database</li>
+                        <li class="flex items-center"><i class="fas fa-check text-render-green mr-2"></i>Automatic deployments</li>
+                        <li class="flex items-center"><i class="fas fa-check text-render-green mr-2"></i>SSL certificates</li>
+                    </ul>
+                </div>
+                
+                <div class="platform-card bg-gradient-to-br from-gray-800/20 to-black/20 p-8 rounded-xl border border-gray-600/30">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-rocket text-white text-2xl mr-4"></i>
+                        <h3 class="text-2xl font-bold">Vercel</h3>
+                    </div>
+                    <p class="text-gray-300 mb-4">Optimized for frontend and serverless Django applications.</p>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center"><i class="fas fa-check text-white mr-2"></i>Edge network</li>
+                        <li class="flex items-center"><i class="fas fa-check text-white mr-2"></i>Serverless functions</li>
+                        <li class="flex items-center"><i class="fas fa-check text-white mr-2"></i>Fast deployments</li>
+                        <li class="flex items-center"><i class="fas fa-check text-white mr-2"></i>GitHub integration</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Prerequisites Section -->
+    <section id="prerequisites" class="py-16 bg-black/20">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12 gradient-text">Prerequisites</h2>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="step-card p-6 rounded-xl border border-primary/30">
+                    <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
+                        <i class="fab fa-python text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Django Project</h3>
+                    <p class="text-gray-300">Working Django application ready for deployment</p>
+                </div>
+                
+                <div class="step-card p-6 rounded-xl border border-primary/30">
+                    <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
+                        <i class="fab fa-git-alt text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Git Repository</h3>
+                    <p class="text-gray-300">Code hosted on GitHub, GitLab, or Bitbucket</p>
+                </div>
+                
+                <div class="step-card p-6 rounded-xl border border-primary/30">
+                    <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-file-alt text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Requirements File</h3>
+                    <p class="text-gray-300">requirements.txt with all dependencies</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Essential Files Section -->
+    <section id="files" class="py-16">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12 gradient-text">Essential Files</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- requirements.txt -->
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-600/50">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-file-code text-primary mr-2"></i>requirements.txt
+                    </h3>
+                    <div class="code-block p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                        <pre class="text-green-400">Django==4.2.7
+gunicorn==21.2.0
+whitenoise==6.6.0
+psycopg2-binary==2.9.9
+python-decouple==3.8
+dj-database-url==2.1.0
+django-cors-headers==4.3.1
+Pillow==10.1.0
+django-crispy-forms==2.1
+crispy-tailwind==0.5.0</pre>
+                    </div>
+                </div>
+
+                <!-- .env file -->
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-600/50">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-key text-secondary mr-2"></i>.env
+                    </h3>
+                    <div class="code-block p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                        <pre class="text-yellow-400">SECRET_KEY=your-secret-key-here
+DEBUG=False
+DATABASE_URL=postgresql://user:pass@host:port/db
+ALLOWED_HOSTS=yourdomain.com,.onrender.com,.vercel.app
+STATIC_URL=/static/
+MEDIA_URL=/media/
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password</pre>
+                    </div>
+                </div>
+
+                <!-- .gitignore -->
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-600/50">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fab fa-git-alt text-orange-400 mr-2"></i>.gitignore
+                    </h3>
+                    <div class="code-block p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                        <pre class="text-gray-300"># Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Static files
+/staticfiles/
+/static/
+collected-static/</pre>
+                    </div>
+                </div>
+
+                <!-- settings.py Configuration -->
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-600/50">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-cog text-blue-400 mr-2"></i>settings.py (Key Parts)
+                    </h3>
+                    <div class="code-block p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                        <pre class="text-blue-300">import os
+from decouple import config
+import dj_database_url
+
+# Security
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+
+# Database
+DATABASES = {
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL')
+    )
+}
+
+# Static files
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Middleware
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # ... other middleware
+]</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Render Deployment -->
+    <section id="render" class="py-16 bg-gradient-to-br from-render-green/10 to-emerald-600/10">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-render-green rounded-xl mb-4">
+                    <i class="fas fa-server text-black text-2xl"></i>
+                </div>
+                <h2 class="text-4xl font-bold mb-4">Deploy to Render</h2>
+                <p class="text-xl text-gray-300">Step-by-step guide for Render deployment</p>
+            </div>
+
+            <div class="space-y-8">
+                <!-- Step 1 -->
+                <div class="step-card p-8 rounded-xl border border-render-green/30">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-render-green text-black rounded-full flex items-center justify-center font-bold mr-4 mt-1">1</div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold mb-4">Create Render Account & Connect Repository</h3>
+                            <ul class="space-y-2 text-gray-300 mb-4">
+                                <li>• Sign up at <a href="https://render.com" class="text-render-green hover:underline">render.com</a></li>
+                                <li>• Connect your GitHub/GitLab account</li>
+                                <li>• Select your Django project repository</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card p-8 rounded-xl border border-render-green/30">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-render-green text-black rounded-full flex items-center justify-center font-bold mr-4 mt-1">2</div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold mb-4">Create Build Script</h3>
+                            <p class="text-gray-300 mb-4">Create <code class="bg-slate-700 px-2 py-1 rounded">build.sh</code> in your project root:</p>
+                            <div class="code-block p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                                <pre class="text-green-400">#!/usr/bin/env bash
+# exit on error
+set -o errexit
+
+pip install -r requirements.txt
+
+python manage.py collectstatic --no-input
+python manage.py migrate</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card p-8 rounded-xl border border-render-green/30">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-render-green text-black rounded-full flex items-center justify-center font-bold mr-4 mt-1">3</div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold mb-4">Configure Web Service</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="font-semibold mb-2 text-render-green">Service Settings:</h4>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>• <strong>Environment:</strong> Python 3</li>
+                                        <li>• <strong>Build Command:</strong> <code>./build.sh</code></li>
+                                        <li>• <strong>Start Command:</strong> <code>gunicorn myproject.wsgi:application</code></li>
+                                        <li>• <strong>Auto-Deploy:</strong> Yes</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-2 text-render-green">Environment Variables:</h4>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>• SECRET_KEY</li>
+                                        <li>• DEBUG=False</li>
+                                        <li>• DATABASE_URL</li>
+                                        <li>• PYTHON_VERSION=3.11.6</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step-card p-8 rounded-xl border border-render-green/30">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-render-green text-black rounded-full flex items-center justify-center font-bold mr-4 mt-1">4</div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold mb-4">Create PostgreSQL Database</h3>
+                            <ul class="space-y-2 text-gray-300">
+                                <li>• Go to Render Dashboard → Create → PostgreSQL</li>
+                                <li>• Choose a name for your database</li>
+                                <li>• Copy the External Database URL</li>
+                                <li>• Add it as DATABASE_URL environment variable in your web service</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vercel Deployment -->
+    <section id="vercel" class="py-16 bg-gradient-to-br from-black/20 to-gray-800/20">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-xl mb-4">
+                    <i class="fas fa-rocket text-black text-2xl"></i>
+                </div>
+                <h2 class="text-4xl font-bold mb-4">Deploy to Vercel</h2>
+                <p class="text-xl text-gray-300">Step-by-step guide for Vercel deployment</p>
+            </div>
+
+            <div class="space-y-8">
+                <!-- Step 1 -->
+                <div class="step-card p-8 rounded-xl border border-gray-600/30">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center font-bold mr-4 mt-1">1</div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold mb-4">Create vercel.json Configuration</h3>
+                            <p class="text-gray-300 mb-4">Create <code class="bg-slate-700 px-2 py-1 rounded">vercel.json</code> in your project root:</p>
+                            <div class="code-block p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                                <pre class="text-blue-300">{
+  "version": 2,
+  "builds": [
+    {
+      "src": "myproject/wsgi.py",
+      "use": "@vercel/python",
+      "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+    },
+    {
+      "src": "build_files.sh",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "staticfiles_build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "myproject/wsgi.py"
+    }
+  ]
+}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card p-8 rounded-xl border border-gray-600/30">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center font-bold mr-4 mt-1">2</div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold mb-4">Create Build Script</h3>
+                            <p class="text-gray-300 mb-4">Create <code class="bg-slate-700 px-2 py-1 rounded">build_files.sh</code>:</p>
+                            <div class="code-block p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                                <pre class="text-green-400">#!/bin/bash
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Collect static files
+python manage.py collectstatic --noinput --clear</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card p-8 rounded-xl border border-gray-600/30">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center font-bold mr-4 mt-1">3</div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold mb-4">Update Settings for Vercel</h3>
+                            <p class="text-gray-300 mb-4">Add to your <code class="bg-slate-700 px-2 py-1 rounded">settings.py</code>:</p>
+                            <div class="code-block p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                                <pre class="text-blue-300"># Vercel specific settings
+import os
+
+# Static files
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
+
+# Database (use external service like PlanetScale, Neon, etc.)
+if 'DATABASE_URL' in os.environ:
+    import dj_database_url
+    DATABASES['default'] = dj_database_url.parse(os.environ['DATABASE_URL'])
+
+# Vercel specific
+if os.environ.get('VERCEL_ENV'):
+    ALLOWED_HOSTS.extend(['.vercel.app', '.now.sh'])</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step-card p-8 rounded-xl border border-gray-600/30">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center font-bold mr-4 mt-1">4</div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold mb-4">Deploy to Vercel</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="font-semibold mb-2">Via Vercel CLI:</h4>
+                                    <div class="code-block p-3 rounded-lg font-mono text-sm">
+                                        <pre class="text-green-400">npm i -g vercel
+vercel login
+vercel --prod</pre>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-2">Via Vercel Dashboard:</h4>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>• Visit <a href="https://vercel.com" class="text-blue-400 hover:underline">vercel.com</a></li>
+                                        <li>• Import Git Repository</li>
+                                        <li>• Configure environment variables</li>
+                                        <li>• Deploy</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Environment Variables -->
+    <section class="py-16 bg-black/20">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12 gradient-text">Environment Variables Setup</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-600/50">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-server text-render-green mr-2"></i>Render Environment Variables
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-slate-700/50 rounded">
+                            <code class="text-render-green">SECRET_KEY</code>
+                            <p class="text-sm text-gray-400 mt-1">Your Django secret key</p>
+                        </div>
+                        <div class="p-3 bg-slate-700/50 rounded">
+                            <code class="text-render-green">DEBUG</code>
+                            <p class="text-sm text-gray-400 mt-1">False</p>
+                        </div>
+                        <div class="p-3 bg-slate-700/50 rounded">
+                            <code class="text-render-green">DATABASE_URL</code>
+                            <p class="text-sm text-gray-400 mt-1">PostgreSQL connection string</p>
