@@ -65,8 +65,8 @@ Want to improve this guide?
 
 ## 📧 Contact
 - **Website:** [https://django-deployment-rouge.vercel.app/](https://django-deployment-rouge.vercel.app/)
-- **Author:** *(Your Name Here)*
-- **Email:** *(your-email@example.com)*
+- **Author:** *Shivu Kumar*
+
 
 ---
 
